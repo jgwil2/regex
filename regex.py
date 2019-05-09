@@ -21,8 +21,7 @@ class NFA(object):
         Compile an NFA given a regular expression.
         '''
         self.frag_stack = []
-        self.start_state = State()
-        self.current_states = set([self.start_state])
+
         for c in regex:
             if c == '(':
                 pass
@@ -37,13 +36,35 @@ class NFA(object):
             if c == '?':
                 self.question()
             else:
-                self.frag_stack.append(self.literal(c))
+                # if there is something in the frag stack then we pop
+                # it off the stack and patch all its out arrows to
+                # point to the new frag's start state and push the new
+                # fragment back onto the stack
+                current = self.literal(c)
+                if len(self.frag_stack) > 0:
+                    previous = self.frag_stack.pop()
+                    current = self.concat(previous, current)
+
+                # otherwise this is the first character we are reading,
+                # so we simply push the fragment onto the stack and
+                # track this fragment's start state
+                self.start_state = current.start_state
+                self.frag_stack.append(current)
+
+            # at the end of the loop, we should create a match state
+            # and connect it to remaining fragment(s?) in the stack
+            final_state = State(None, None, True)
+            frag = self.frag_stack.pop()
+            self.patch(frag.out_arrows, final_state)
+
+            self.start_state = frag.start_state
 
     def literal(self, c):
         '''
         Returns fragment for literal character
         '''
-        return Fragment(State(Arrow(c)))
+        arrow = Arrow(c)
+        return Fragment(State(arrow), [arrow])
 
     def concat(self, f1, f2):
         '''
@@ -51,7 +72,8 @@ class NFA(object):
         Returns a fragment connecting the out arrows of f1 to the
         start state of f2
         '''
-        pass
+        self.patch(f1.out_arrows, f2.start_state)
+        return Fragment(f1.start_state, f2.out_arrows)
 
     def alternate(self, f1, f2):
         '''
@@ -83,24 +105,38 @@ class NFA(object):
         '''
         pass
 
+    def patch(self, arrow_list, state):
+        '''
+        Procedure: take a list of arrows and a state and set each arrow
+        to point to state.
+        '''
+        for arrow in arrow_list:
+            arrow.to_state = state
+
     def test(self, string):
+        '''
+        Starting from self.start_state, simulate the NFA for the string
+        '''
         pass
 
 class State(object):
     '''
     Each state is defined by its out arrows.
     '''
-    def __init__(self, arrow1=None, arrow2=None):
-        self.arrow1 = arrow1
-        self.arrow2 = arrow2
+    def __init__(self, out1=None, out2=None, is_match=False):
+        self.out1 = out1
+        self.out2 = out2
+        self.is_match = is_match
 
 class Fragment(object):
     '''
     A fragment is a partial NFA with dangling arrows. The arrows are
     the set of all out arrows of rightmost states in the fragment.
+    Fragment only tracks a start state and a set of out arrows.
     '''
-    def __init__(self, start_state):
+    def __init__(self, start_state, out_arrows=[]):
         self.start_state = start_state
+        self.out_arrows = out_arrows
 
 class Arrow(object):
     '''
@@ -115,7 +151,6 @@ class Arrow(object):
 def main():
     if len(sys.argv) > 2:
         re = RegEx(sys.argv[1])
-        import pdb;pdb.set_trace()
         re.test(sys.argv[2])
     else:
         raise Exception('Please provide a regular expression and a string to test')
