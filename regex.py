@@ -51,13 +51,13 @@ class NFA(object):
                 self.start_state = current.start_state
                 self.frag_stack.append(current)
 
-            # at the end of the loop, we should create a match state
-            # and connect it to remaining fragment(s?) in the stack
-            final_state = State(None, None, True)
-            frag = self.frag_stack.pop()
-            self.patch(frag.out_arrows, final_state)
+        # at the end of the loop, we should create a match state
+        # and connect it to remaining fragment(s?) in the stack
+        final_state = State(None, None, True)
+        frag = self.frag_stack.pop()
+        self.patch(frag.out_arrows, final_state)
 
-            self.start_state = frag.start_state
+        self.start_state = frag.start_state
 
     def literal(self, c):
         '''
