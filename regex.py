@@ -5,7 +5,7 @@ class RegEx(object):
         self.nfa = NFA(pattern)
 
     def test(self, string):
-        self.nfa.test(string)
+        return self.nfa.simulate(string)
 
 class NFA(object):
     '''
@@ -113,11 +113,26 @@ class NFA(object):
         for arrow in arrow_list:
             arrow.to_state = state
 
-    def test(self, string):
+    def simulate(self, string):
         '''
         Starting from self.start_state, simulate the NFA for the string
         '''
-        pass
+        active_states = [self.start_state]
+        next_states = []
+        for c in string:
+            for state in active_states:
+                if state.out1 and (state.out1.char == c or state.out1.char == ''):
+                    next_states.append(state.out1.to_state)
+                if state.out2 and (state.out2.char == c or state.out2.char == ''):
+                    next_states.append(state.out2.to_state)
+            active_states = next_states
+            next_states = []
+
+        for state in active_states:
+            if state.is_match:
+                return True
+
+        return False
 
 class State(object):
     '''
@@ -144,14 +159,14 @@ class Arrow(object):
     and a target state (which may be None in the case of dangling
     arrows).
     '''
-    def __init__(self, c, to_state=None):
+    def __init__(self, char, to_state=None):
         self.to_state = to_state
-        self.c = c
+        self.char = char
 
 def main():
     if len(sys.argv) > 2:
         re = RegEx(sys.argv[1])
-        re.test(sys.argv[2])
+        print(re.test(sys.argv[2]))
     else:
         raise Exception('Please provide a regular expression and a string to test')
 
