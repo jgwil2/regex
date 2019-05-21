@@ -45,6 +45,7 @@ class NFA(object):
                     previous = self.frag_stack.pop()
                     current = self.concat(previous, current)
 
+                # FIXME
                 # otherwise this is the first character we are reading,
                 # so we simply push the fragment onto the stack and
                 # track this fragment's start state
@@ -81,7 +82,9 @@ class NFA(object):
         Returns a fragment with a new start state with arrows pointing
         to both f1 and f2
         '''
-        pass
+        to_f1 = Arrow('', f1)
+        to_f2 = Arrow('', f2)
+        return Fragment(State(to_f1, to_f2), [to_f1, to_f2])
 
     def question(self, f):
         '''
@@ -143,6 +146,12 @@ class State(object):
         self.out2 = out2
         self.is_match = is_match
 
+    def __str__(self):
+        return 'State(out1: {}, out2: {})'.format(self.out1, self.out2)
+
+    def __repr__(self):
+        return self.__str__()
+
 class Fragment(object):
     '''
     A fragment is a partial NFA with dangling arrows. The arrows are
@@ -153,6 +162,12 @@ class Fragment(object):
         self.start_state = start_state
         self.out_arrows = out_arrows
 
+    def __str__(self):
+        return 'Fragment(start_state: {}, out_arrows: {})'.format(self.start_state, self.out_arrows)
+
+    def __repr__(self):
+        return self.__str__()
+
 class Arrow(object):
     '''
     An arrow has a character (which may be the empty string)
@@ -162,6 +177,12 @@ class Arrow(object):
     def __init__(self, char, to_state=None):
         self.to_state = to_state
         self.char = char
+
+    def __str__(self):
+        return 'Arrow(char: {}, to_state: {})'.format(self.char, self.to_state)
+
+    def __repr__(self):
+        return self.__str__()
 
 def main():
     if len(sys.argv) > 2:
