@@ -1,57 +1,82 @@
 import unittest
 
-from regex import NFA, RegEx
+from regex import Regex
+
+class TestLiteral(unittest.TestCase):
+
+    def setUp(self):
+        self.regex = Regex('a')
+
+    def test_passes_string_in_language(self):
+        self.assertTrue(self.regex.test('a'))
+
+    def test_fails_string_not_in_language(self):
+        self.assertFalse(self.regex.test('b'))
 
 class TestConcatenation(unittest.TestCase):
 
     def setUp(self):
-        self.nfa = NFA('ab')
+        self.regex = Regex('ab')
 
     def test_passes_string_in_language(self):
-        self.assertTrue(self.nfa.simulate('ab'))
+        self.assertTrue(self.regex.test('ab'))
 
     def test_fails_string_not_in_language(self):
-        self.assertFalse(self.nfa.simulate('ac'))
+        self.assertFalse(self.regex.test('ac'))
 
 class TestUnion(unittest.TestCase):
 
     def setUp(self):
-        self.nfa = NFA('a|b')
+        self.regex = Regex('a|b')
 
     def test_passes_string_in_language(self):
-        self.assertTrue(self.nfa.simulate('a'))
-        self.assertTrue(self.nfa.simulate('b'))
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('b'))
 
     def test_fails_string_not_in_language(self):
-        self.assertFalse(self.nfa.simulate('c'))
+        self.assertFalse(self.regex.test('c'))
 
 class TestStar(unittest.TestCase):
 
     def setUp(self):
-        self.nfa = NFA('a*')
+        self.regex = Regex('a*')
 
     def test_passes_string_in_language(self):
-        self.assertTrue(self.nfa.simulate(''))
-        self.assertTrue(self.nfa.simulate('a'))
-        self.assertTrue(self.nfa.simulate('aaa'))
+        self.assertTrue(self.regex.test(''))
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('aaa'))
 
     def test_fails_string_not_in_language(self):
-        self.assertFalse(self.nfa.simulate('ab'))
-        self.assertFalse(self.nfa.simulate('aab'))
+        self.assertFalse(self.regex.test('ab'))
+        self.assertFalse(self.regex.test('aab'))
 
 class TestPlus(unittest.TestCase):
 
     def setUp(self):
-        self.nfa = NFA('a+')
+        self.regex = Regex('a+')
 
     def test_passes_string_in_language(self):
-        self.assertTrue(self.nfa.simulate('a'))
-        self.assertTrue(self.nfa.simulate('aaa'))
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('aaa'))
 
     def test_fails_string_not_in_language(self):
-        self.assertTrue(self.nfa.simulate(''))
-        self.assertFalse(self.nfa.simulate('ab'))
-        self.assertFalse(self.nfa.simulate('aab'))
+        self.assertTrue(self.regex.test(''))
+        self.assertFalse(self.regex.test('ab'))
+        self.assertFalse(self.regex.test('aab'))
+
+class TestQuestion(unittest.TestCase):
+
+    def setUp(self):
+        self.regex = Regex('a?')
+
+    def test_passes_string_in_language(self):
+        self.assertTrue(self.regex.test(''))
+        self.assertTrue(self.regex.test('a'))
+
+    def test_fails_string_not_in_language(self):
+        self.assertTrue(self.regex.test('aa'))
+        self.assertFalse(self.regex.test('ab'))
+        self.assertFalse(self.regex.test('aab'))
 
 if __name__ == '__main__':
     unittest.main()

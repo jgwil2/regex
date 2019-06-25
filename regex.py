@@ -1,8 +1,30 @@
 import sys
 
-class RegEx(object):
+class Regex(object):
+    '''
+
+    '''
     def __init__(self, pattern):
-        self.nfa = NFA(pattern)
+        '''
+        Compile an NFA given a regular expression.
+        '''
+
+        for c in pattern:
+            if c == '(':
+                pass
+            elif c == ')':
+                pass
+            elif c == '|':
+                self.nfa = NFA.alternate()
+            elif c == '*':
+                self.nfa = NFA.star()
+            elif c == '+':
+                self.nfa = NFA.plus()
+            elif c == '?':
+                self.nfa = NFA.question()
+            else:
+                self.nfa = NFA.literal(c)
+
 
     def test(self, string):
         return self.nfa.simulate(string)
@@ -12,69 +34,53 @@ class NFA(object):
     An NFA is a collection of linked state structures with a start
     state and a set of matching states.
     The NFA works by reading a string and updating a state list
-    according to each state's set of out arrows.
+    according to each state's set of out edges.
     The NFA accepts a string if the final state list contains a
     matching state, and rejects it otherwise.
     '''
-    def __init__(self, regex):
-        '''
-        Compile an NFA given a regular expression.
-        '''
+    def __init__(self, start_state):
+        self.start_state = start_state
 
-        for c in regex:
-            if c == '(':
-                pass
-            elif c == ')':
-                pass
-            elif c == '|':
-                self.alternate()
-            elif c == '*':
-                self.star()
-            elif c == '+':
-                self.plus()
-            elif c == '?':
-                self.question()
-            else:
-                pass
-
-    def literal(self, c):
+    @staticmethod
+    def literal(c):
         '''
         Returns an NFA for a literal character
         '''
-        pass
+        # TODO clean this up w/ named params
+        end_state = State(None, None, True)
+        edge = Edge(c, end_state)
+        start_state = State(edge)
+        return NFA(start_state)
 
-    def concat(self, f1, f2):
+    @staticmethod
+    def concat(f1, f2):
         '''
         Concatenation
-        Returns an NFA connecting the out arrows of f1 to the
-        start state of f2
         '''
         pass
 
-    def alternate(self, f1, f2):
+    @staticmethod
+    def alternate(f1, f2):
         '''
         Alternation
-        Returns an NFA with a new start state with arrows pointing
-        to both f1 and f2
         '''
         pass
 
-    def question(self, f):
+    @staticmethod
+    def question(f):
         '''
         "?": zero or one
-        Returns an NFA with a new start state pointing to both f
-        and the empty path
         '''
         pass
 
+    @staticmethod
     def star(self):
         '''
         "*": zero or more
-        Returns an NFA with a new start state pointing to both f
-        and the empty path, with f.out pointing back to f.start_state
         '''
         pass
 
+    @staticmethod
     def plus(self):
         '''
         "+": one or more
@@ -104,7 +110,7 @@ class NFA(object):
 
 class State(object):
     '''
-    Each state is defined by its out arrows.
+    Each state is defined by its out edges.
     '''
     def __init__(self, out1=None, out2=None, is_match=False):
         self.out1 = out1
@@ -117,25 +123,25 @@ class State(object):
     def __repr__(self):
         return self.__str__()
 
-class Arrow(object):
+class Edge(object):
     '''
-    An arrow has a character (which may be the empty string)
+    An edge has a character (which may be the empty string)
     and a target state (which may be None in the case of dangling
-    arrows).
+    edges).
     '''
     def __init__(self, char, to_state=None):
         self.to_state = to_state
         self.char = char
 
     def __str__(self):
-        return 'Arrow(char: {}, to_state: {})'.format(self.char, self.to_state)
+        return 'Edge(char: {}, to_state: {})'.format(self.char, self.to_state)
 
     def __repr__(self):
         return self.__str__()
 
 def main():
     if len(sys.argv) > 2:
-        re = RegEx(sys.argv[1])
+        re = Regex(sys.argv[1])
         print(re.test(sys.argv[2]))
     else:
         raise Exception('Please provide a regular expression and a string to test')
