@@ -8,7 +8,7 @@ class Regex(object):
         '''
         Compile an NFA given a regular expression pattern
         '''
-        self.nfa = None
+        self.nfa = NFA.literal('')
 
         for c in pattern:
             if c == '(':
@@ -24,11 +24,7 @@ class Regex(object):
             elif c == '?':
                 self.nfa = NFA.question()
             else:
-                # first character
-                if None == self.nfa:
-                    self.nfa = NFA.literal(c)
-                else:
-                    self.nfa = NFA.concat(self.nfa, NFA.literal(c))
+                self.nfa = NFA.concat(self.nfa, NFA.literal(c))
 
     def test(self, string):
         return self.nfa.simulate(string)
