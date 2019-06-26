@@ -16,9 +16,9 @@ class Regex(object):
             elif c == ')':
                 pass
             elif c == '|':
-                self.nfa = NFA.alternate()
+                self.nfa = NFA.union()
             elif c == '*':
-                self.nfa = NFA.star()
+                self.nfa = NFA.star(self.nfa)
             elif c == '+':
                 self.nfa = NFA.plus()
             elif c == '?':
@@ -38,9 +38,9 @@ class NFA(object):
     The NFA accepts a string if the final state list contains a
     matching state, and rejects it otherwise.
     '''
-    def __init__(self, start_state, end_states):
+    def __init__(self, start_state, accept_states):
         self.start_state = start_state
-        self.end_states = end_states
+        self.accept_states = accept_states
 
     @staticmethod
     def literal(c):
@@ -48,10 +48,10 @@ class NFA(object):
         Returns an NFA for a literal character
         '''
         # TODO clean this up w/ named params
-        end_state = State(None, None, True)
-        edge = Edge(c, end_state)
+        accept_state = State(None, None, True)
+        edge = Edge(c, accept_state)
         start_state = State(edge)
-        return NFA(start_state, [end_state])
+        return NFA(start_state, [accept_state])
 
     @staticmethod
     def concat(nfa1, nfa2):
@@ -59,31 +59,35 @@ class NFA(object):
         Concatenation
         '''
         start_state = nfa1.start_state
-        end_states = nfa2.end_states
+        accept_states = nfa2.accept_states
         # FIXME should use immutable data structures
-        for end_state in nfa1.end_states:
-            end_state.is_match = False
-            end_state.out1 = Edge('', nfa2.start_state)
-        return NFA(start_state, end_states)
+        for accept_state in nfa1.accept_states:
+            accept_state.is_match = False
+            accept_state.out1 = Edge('', nfa2.start_state)
+        return NFA(start_state, accept_states)
 
     @staticmethod
-    def alternate(f1, f2):
+    def union(nfa1, nfa2):
         '''
         Alternation
         '''
         pass
 
     @staticmethod
+    def star(nfa):
+        '''
+        "*": zero or more
+        '''
+        edge = Edge('', nfa.start_state)
+        new_start_state = State(edge, None, True)
+        for accept_state in nfa.accept_states:
+            accept_state.out1 = Edge('', nfa.start_state)
+        return NFA(new_start_state, nfa.accept_states.append(new_start_state))
+
+    @staticmethod
     def question(f):
         '''
         "?": zero or one
-        '''
-        pass
-
-    @staticmethod
-    def star(self):
-        '''
-        "*": zero or more
         '''
         pass
 

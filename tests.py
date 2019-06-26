@@ -50,20 +50,6 @@ class TestStar(unittest.TestCase):
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aab'))
 
-class TestPlus(unittest.TestCase):
-
-    def setUp(self):
-        self.regex = Regex('a+')
-
-    def test_passes_string_in_language(self):
-        self.assertTrue(self.regex.test('a'))
-        self.assertTrue(self.regex.test('aaa'))
-
-    def test_fails_string_not_in_language(self):
-        self.assertTrue(self.regex.test(''))
-        self.assertFalse(self.regex.test('ab'))
-        self.assertFalse(self.regex.test('aab'))
-
 class TestQuestion(unittest.TestCase):
 
     def setUp(self):
@@ -75,6 +61,20 @@ class TestQuestion(unittest.TestCase):
 
     def test_fails_string_not_in_language(self):
         self.assertTrue(self.regex.test('aa'))
+        self.assertFalse(self.regex.test('ab'))
+        self.assertFalse(self.regex.test('aab'))
+
+class TestPlus(unittest.TestCase):
+
+    def setUp(self):
+        self.regex = Regex('a+')
+
+    def test_passes_string_in_language(self):
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('aaa'))
+
+    def test_fails_string_not_in_language(self):
+        self.assertTrue(self.regex.test(''))
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aab'))
 
