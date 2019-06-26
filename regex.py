@@ -47,8 +47,7 @@ class NFA(object):
         '''
         Returns an NFA for a literal character
         '''
-        # TODO clean this up w/ named params
-        accept_state = State(None, None, True)
+        accept_state = State(is_match=True)
         edge = Edge(c, accept_state)
         start_state = State(edge)
         return NFA(start_state, [accept_state])
@@ -79,7 +78,7 @@ class NFA(object):
         "*": zero or more
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(edge, None, True)
+        new_start_state = State(out1=edge, is_match=True)
         for accept_state in nfa.accept_states:
             accept_state.out1 = Edge('', nfa.start_state)
         return NFA(new_start_state, nfa.accept_states.append(new_start_state))
@@ -90,7 +89,7 @@ class NFA(object):
         "?": zero or one
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(edge, None, True)
+        new_start_state = State(out1=edge, is_match=True)
         return NFA(new_start_state, nfa.accept_states.append(new_start_state))
 
     @staticmethod
@@ -99,7 +98,7 @@ class NFA(object):
         "+": one or more
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(edge, None, False)
+        new_start_state = State(out1=edge, is_match=False)
         for accept_state in nfa.accept_states:
             accept_state.out1 = Edge('', nfa.start_state)
         return NFA(new_start_state, nfa.accept_states)
