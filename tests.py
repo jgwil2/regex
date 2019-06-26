@@ -11,6 +11,7 @@ class TestLiteral(unittest.TestCase):
         self.assertTrue(self.regex.test('a'))
 
     def test_fails_string_not_in_language(self):
+        self.assertFalse(self.regex.test(''))
         self.assertFalse(self.regex.test('b'))
 
 class TestConcatenation(unittest.TestCase):
@@ -22,6 +23,7 @@ class TestConcatenation(unittest.TestCase):
         self.assertTrue(self.regex.test('ab'))
 
     def test_fails_string_not_in_language(self):
+        self.assertFalse(self.regex.test(''))
         self.assertFalse(self.regex.test('ac'))
 
 class TestUnion(unittest.TestCase):
@@ -60,7 +62,7 @@ class TestQuestion(unittest.TestCase):
         self.assertTrue(self.regex.test('a'))
 
     def test_fails_string_not_in_language(self):
-        self.assertTrue(self.regex.test('aa'))
+        self.assertFalse(self.regex.test('aa'))
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aab'))
 
@@ -74,7 +76,7 @@ class TestPlus(unittest.TestCase):
         self.assertTrue(self.regex.test('aaa'))
 
     def test_fails_string_not_in_language(self):
-        self.assertTrue(self.regex.test(''))
+        self.assertFalse(self.regex.test(''))
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aab'))
 
