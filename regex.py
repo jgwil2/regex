@@ -20,9 +20,9 @@ class Regex(object):
             elif c == '*':
                 self.nfa = NFA.star(self.nfa)
             elif c == '+':
-                self.nfa = NFA.plus()
+                self.nfa = NFA.plus(self.nfa)
             elif c == '?':
-                self.nfa = NFA.question()
+                self.nfa = NFA.question(self.nfa)
             else:
                 self.nfa = NFA.concat(self.nfa, NFA.literal(c))
 
@@ -85,18 +85,24 @@ class NFA(object):
         return NFA(new_start_state, nfa.accept_states.append(new_start_state))
 
     @staticmethod
-    def question(f):
+    def question(nfa):
         '''
         "?": zero or one
         '''
-        pass
+        edge = Edge('', nfa.start_state)
+        new_start_state = State(edge, None, True)
+        return NFA(new_start_state, nfa.accept_states.append(new_start_state))
 
     @staticmethod
-    def plus(self):
+    def plus(nfa):
         '''
         "+": one or more
         '''
-        pass
+        edge = Edge('', nfa.start_state)
+        new_start_state = State(edge, None, False)
+        for accept_state in nfa.accept_states:
+            accept_state.out1 = Edge('', nfa.start_state)
+        return NFA(new_start_state, nfa.accept_states)
 
     def simulate(self, string):
         '''
