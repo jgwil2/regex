@@ -4,10 +4,17 @@ from regex import Regex
 
 class TestExpressionParser(unittest.TestCase):
 
-    def test_inserts_literal_concat_operator(self):
+    def test_insert_concat_operato(self):
         self.assertEqual(Regex.insert_concat_operator('abc'), 'a.b.c')
         self.assertEqual(Regex.insert_concat_operator('a((abc)*c)*'), 'a.((a.b.c)*.c)*')
         self.assertEqual(Regex.insert_concat_operator('(ab)*(cd)*'), '(a.b)*.(c.d)*')
+        self.assertEqual(Regex.insert_concat_operator('a(bb)+a'), 'a.(b.b)+.a')
+
+    def test_convert_infix_to_post(self):
+        self.assertEqual(Regex.convert_infix_to_post('a.b.c'), 'ab.c.')
+        self.assertEqual(Regex.convert_infix_to_post('a.((a.b.c)*.c)*'), 'aab.c.*c.*.')
+        self.assertEqual(Regex.convert_infix_to_post('(a.b)*.(c.d)*'), 'ab.*cd.*.')
+        self.assertEqual(Regex.convert_infix_to_post('a.(b.b)+.a'), 'abb.+.a.')
 
 class TestLiteral(unittest.TestCase):
 

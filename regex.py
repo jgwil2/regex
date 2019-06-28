@@ -34,11 +34,50 @@ class Regex(object):
 
     @staticmethod
     def parse(expr):
+        return Regex.convert_infix_to_post(Regex.insert_concat_operator(expr))
+
+    @staticmethod
+    def convert_infix_to_post(expr):
         '''
-        Convert a regular expression to postfix notation via Dijkstra's
-        shunting-yard algorithm
+        Convert a regular expression with literal concat operator to
+        postfix notation via Dijkstra's shunting-yard algorithm
         '''
-        return expr
+        precedence = {
+            '*': 0,
+            '?': 0,
+            '+': 0,
+            '.': 1,
+            '|': 2
+        }
+        output_queue = []
+        operator_stack = []
+
+        def top_of_stack():
+            if 0 == len(operator_stack):
+                raise Exception('operator_stack is empty')
+            return operator_stack[len(operator_stack)-1]
+
+        for index, c in enumerate(expr):
+            if c.isalpha():
+                output_queue.append(c)
+            elif c in precedence:
+                while (0 != len(operator_stack)
+                and top_of_stack() != '('
+                and precedence[c] >= precedence[top_of_stack()]):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(c)
+            elif '(' == c:
+                operator_stack.append(c)
+            elif ')' == c:
+                while '(' != top_of_stack():
+                    output_queue.append(operator_stack.pop())
+                if '(' == top_of_stack():
+                    operator_stack.pop()
+
+        while 0 != len(operator_stack):
+            output_queue.append(operator_stack.pop())
+
+        return ''.join(output_queue)
 
     @staticmethod
     def insert_concat_operator(expr):
