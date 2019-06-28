@@ -2,29 +2,59 @@ import sys
 
 class Regex(object):
     '''
-
+    Wrapper for an NFA that corresponds to a given regular expression
     '''
-    def __init__(self, pattern):
+    def __init__(self, expr):
         '''
         Compile an NFA given a regular expression pattern
         '''
-        self.nfa = NFA.literal('')
+        self.nfa_stack = []
+        self.nfa_stack.append(NFA.literal(''))
 
-        for c in pattern:
+        postfix_expr = Regex.parse(expr)
+
+        for index, c in enumerate(postfix_expr):
             if c == '(':
                 pass
             elif c == ')':
                 pass
             elif c == '|':
-                self.nfa = NFA.union()
+                pass
             elif c == '*':
-                self.nfa = NFA.star(self.nfa)
+                self.nfa_stack.append(NFA.star(self.nfa_stack.pop()))
             elif c == '+':
-                self.nfa = NFA.plus(self.nfa)
+                self.nfa_stack.append(NFA.plus(self.nfa_stack.pop()))
             elif c == '?':
-                self.nfa = NFA.question(self.nfa)
+                self.nfa_stack.append(NFA.question(self.nfa_stack.pop()))
             else:
-                self.nfa = NFA.concat(self.nfa, NFA.literal(c))
+                self.nfa_stack.append(NFA.concat(self.nfa_stack.pop(), NFA.literal(c)))
+
+
+        self.nfa = self.nfa_stack.pop()
+
+    @staticmethod
+    def parse(expr):
+        '''
+        Convert a regular expression to postfix notation via Dijkstra's
+        shunting-yard algorithm
+        '''
+        return expr
+
+    @staticmethod
+    def insert_concat_operator(expr):
+        '''
+        Insert a literal concatenation operator '.' into a regular
+        expression
+        '''
+        converted = []
+        for index, c in enumerate(expr):
+            converted.append(c)
+            if index < len(expr) - 1:
+                c2 = expr[index+1]
+                if c not in '(|' and c2 not in ')|*?+':
+                    converted.append('.')
+
+        return ''.join(converted)
 
     def test(self, string):
         return self.nfa.simulate(string)
