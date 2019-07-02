@@ -24,8 +24,8 @@ class Regex(object):
             elif c == '?':
                 nfa_stack.append(NFA.question(nfa_stack.pop()))
             elif c == '.':
-                nfa1 = nfa_stack.pop()
                 nfa2 = nfa_stack.pop()
+                nfa1 = nfa_stack.pop()
                 nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
                 nfa_stack.append(NFA.literal(c))
