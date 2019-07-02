@@ -8,29 +8,30 @@ class Regex(object):
         '''
         Compile an NFA given a regular expression pattern
         '''
-        self.nfa_stack = []
-        self.nfa_stack.append(NFA.literal(''))
+        nfa_stack = []
 
         postfix_expr = Regex.parse(expr)
 
         for index, c in enumerate(postfix_expr):
-            if c == '(':
-                pass
-            elif c == ')':
-                pass
-            elif c == '|':
-                pass
+            if c == '|':
+                nfa1 = nfa_stack.pop()
+                nfa2 = nfa_stack.pop()
+                nfa_stack.append(NFA.union(nfa1, nfa2))
             elif c == '*':
-                self.nfa_stack.append(NFA.star(self.nfa_stack.pop()))
+                nfa_stack.append(NFA.star(nfa_stack.pop()))
             elif c == '+':
-                self.nfa_stack.append(NFA.plus(self.nfa_stack.pop()))
+                nfa_stack.append(NFA.plus(nfa_stack.pop()))
             elif c == '?':
-                self.nfa_stack.append(NFA.question(self.nfa_stack.pop()))
+                nfa_stack.append(NFA.question(nfa_stack.pop()))
+            elif c == '.':
+                nfa1 = nfa_stack.pop()
+                nfa2 = nfa_stack.pop()
+                nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
-                self.nfa_stack.append(NFA.concat(self.nfa_stack.pop(), NFA.literal(c)))
+                nfa_stack.append(NFA.literal(c))
 
 
-        self.nfa = self.nfa_stack.pop()
+        self.nfa = nfa_stack.pop()
 
     @staticmethod
     def parse(expr):
@@ -53,16 +54,14 @@ class Regex(object):
         operator_stack = []
 
         def top_of_stack():
-            if 0 == len(operator_stack):
-                raise Exception('operator_stack is empty')
             return operator_stack[len(operator_stack)-1]
 
         for index, c in enumerate(expr):
-            if c.isalpha():
+            if c.isalnum():
                 output_queue.append(c)
             elif c in precedence:
                 while (0 != len(operator_stack)
-                and top_of_stack() != '('
+                and '(' != top_of_stack()
                 and precedence[c] >= precedence[top_of_stack()]):
                     output_queue.append(operator_stack.pop())
                 operator_stack.append(c)
@@ -88,7 +87,7 @@ class Regex(object):
         converted = []
         for index, c in enumerate(expr):
             converted.append(c)
-            if index < len(expr) - 1:
+            if index < len(expr)-1:
                 c2 = expr[index+1]
                 if c not in '(|' and c2 not in ')|*?+':
                     converted.append('.')
@@ -128,7 +127,6 @@ class NFA(object):
         '''
         start_state = nfa1.start_state
         accept_states = nfa2.accept_states
-        # FIXME should use immutable data structures
         for accept_state in nfa1.accept_states:
             accept_state.is_match = False
             accept_state.out1 = Edge('', nfa2.start_state)
@@ -137,9 +135,12 @@ class NFA(object):
     @staticmethod
     def union(nfa1, nfa2):
         '''
-        Alternation
+        Union
         '''
-        pass
+        edge1 = Edge('', nfa1.start_state)
+        edge2 = Edge('', nfa2.start_state)
+        start_state = State(out1=edge1, out2=edge2, is_match=False)
+        return NFA(start_state, nfa1.accept_states + nfa2.accept_states)
 
     @staticmethod
     def star(nfa):
@@ -186,7 +187,7 @@ class NFA(object):
                 if state.out1 and state.out1.char == '':
                     active_states.append(state.out1.to_state)
                 if state.out2 and state.out2.char == '':
-                    active_states.append(state.out1.to_state)
+                    active_states.append(state.out2.to_state)
 
             # after all edges whose char is '' have been followed,
             # iterate all active states, and if their out edges
