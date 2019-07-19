@@ -192,5 +192,18 @@ class TestParensConcat(unittest.TestCase):
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aab'))
 
+class TestParensQuestionConcat(unittest.TestCase):
+
+    def setUp(self):
+        self.regex = Regex('(ab)?a')
+
+    def test_passes_string_in_language(self):
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('aba'))
+
+    def test_fails_string_not_in_language(self):
+        self.assertFalse(self.regex.test('abc'))
+        self.assertFalse(self.regex.test('ababa'))
+
 if __name__ == '__main__':
     unittest.main()
