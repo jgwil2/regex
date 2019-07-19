@@ -201,7 +201,8 @@ class NFA(object):
             next_states = []
 
         for state in active_states:
-            if state.is_match:
+            # FIXME please fix the simulate method
+            if state.is_match or (state.out1 and state.out1.char == '' and state.out1.to_state.is_match) or (state.out2 and state.out2.char == '' and state.out2.to_state.is_match):
                 return True
 
         return False
@@ -215,12 +216,6 @@ class State(object):
         self.out2 = out2
         self.is_match = is_match
 
-    def __str__(self):
-        return 'State(out1: {}, out2: {}, is_match: {})'.format(self.out1, self.out2, self.is_match)
-
-    def __repr__(self):
-        return self.__str__()
-
 class Edge(object):
     '''
     An edge has a character (which may be the empty string)
@@ -230,12 +225,6 @@ class Edge(object):
     def __init__(self, char, to_state=None):
         self.to_state = to_state
         self.char = char
-
-    def __str__(self):
-        return 'Edge(char: {}, to_state: {})'.format(self.char, self.to_state)
-
-    def __repr__(self):
-        return self.__str__()
 
 def main():
     if len(sys.argv) > 2:
