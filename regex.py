@@ -148,10 +148,14 @@ class NFA(object):
         "*": zero or more
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(out1=edge, is_match=True)
+        # new start state uses out2 to connect to original machine, so
+        # out1 can be written to by a concatenation operation
+        new_start_state = State(out2=edge, is_match=True)
         for accept_state in nfa.accept_states:
-            accept_state.out1 = Edge('', nfa.start_state)
-        return NFA(new_start_state, nfa.accept_states.append(new_start_state))
+            accept_state.out2 = Edge('', nfa.start_state)
+        new_accept_states = nfa.accept_states
+        new_accept_states.append(new_start_state)
+        return NFA(new_start_state, new_accept_states)
 
     @staticmethod
     def question(nfa):
@@ -159,8 +163,10 @@ class NFA(object):
         "?": zero or one
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(out1=edge, is_match=True)
-        return NFA(new_start_state, nfa.accept_states.append(new_start_state))
+        new_start_state = State(out2=edge, is_match=True)
+        new_accept_states = nfa.accept_states
+        new_accept_states.append(new_start_state)
+        return NFA(new_start_state, new_accept_states)
 
     @staticmethod
     def plus(nfa):
@@ -168,9 +174,9 @@ class NFA(object):
         "+": one or more
         '''
         edge = Edge('', nfa.start_state)
-        new_start_state = State(out1=edge, is_match=False)
+        new_start_state = State(out2=edge, is_match=False)
         for accept_state in nfa.accept_states:
-            accept_state.out1 = Edge('', nfa.start_state)
+            accept_state.out2 = Edge('', nfa.start_state)
         return NFA(new_start_state, nfa.accept_states)
 
     def simulate(self, string):
