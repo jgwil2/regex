@@ -235,9 +235,12 @@ class Edge(object):
 def main():
     if len(sys.argv) > 2:
         re = Regex(sys.argv[1])
-        print(re.test(sys.argv[2]))
+        for word in sys.argv[2:]:
+            if re.test(word):
+                print(word)
     else:
-        raise Exception('Please provide a regular expression and a string to test')
+        raise Exception('Please provide a regular expression and at \
+                        least one string to test')
 
 if __name__ == '__main__':
     main()
