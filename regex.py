@@ -179,36 +179,59 @@ class NFA(object):
             accept_state.out2 = Edge('', nfa.start_state)
         return NFA(new_start_state, nfa.accept_states)
 
+    @staticmethod
+    def find_active_states(active_states, visited_states=[]):
+        '''
+        Recursively finds all states linked to a set of starting states
+        by an epsilon edge (an edge whose `char` is empty string)
+        '''
+        def mark_as_visited(state):
+            visited_states.append(state)
+
+        def is_epsilon_edge(edge):
+            return edge and edge.char == ''
+
+        def is_active(state):
+            return state in active_states
+
+        for state in active_states:
+
+            mark_as_visited(state)
+
+            if (is_epsilon_edge(state.out1)
+                and not is_active(state.out1.to_state)):
+                active_states.append(state.out1.to_state)
+            if (is_epsilon_edge(state.out2)
+                and not is_active(state.out2.to_state)):
+                active_states.append(state.out2.to_state)
+
+        # if there are any active_states that have not been visited,
+        # follow their epsilon edges
+        unvisited_states = [state for state in active_states if state not
+                            in visited_states]
+        if len(unvisited_states) > 0:
+            return find_active_states(active_states, visited_states)
+
+        return active_states
+
     def simulate(self, string):
         '''
         Starting from self.start_state, simulate the NFA for the string
         '''
-        active_states = [self.start_state]
-        next_states = []
-        for c in string:
-            # FIXME this code will only follow empty char edges one
-            # level deep. Find a more elegant way to make sure that all
-            # empty char edges are followed!!
-            for state in active_states:
-                if state.out1 and state.out1.char == '':
-                    active_states.append(state.out1.to_state)
-                if state.out2 and state.out2.char == '':
-                    active_states.append(state.out2.to_state)
+        active_states = NFA.find_active_states([self.start_state])
 
-            # after all edges whose char is '' have been followed,
-            # iterate all active states, and if their out edges
-            # match the char, follow the edges
+        for c in string:
+            next_states = []
             for state in active_states:
                 if state.out1 and state.out1.char == c:
                     next_states.append(state.out1.to_state)
                 if state.out2 and state.out2.char == c:
                     next_states.append(state.out2.to_state)
-            active_states = next_states
-            next_states = []
+
+            active_states = NFA.find_active_states(next_states)
 
         for state in active_states:
-            # FIXME please fix the simulate method
-            if state.is_match or (state.out1 and state.out1.char == '' and state.out1.to_state.is_match) or (state.out2 and state.out2.char == '' and state.out2.to_state.is_match):
+            if state.is_match:
                 return True
 
         return False
