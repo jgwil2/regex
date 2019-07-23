@@ -2,11 +2,13 @@ import sys
 
 class Regex(object):
     '''
-    Wrapper for an NFA that corresponds to a given regular expression
+    Wrapper for an NFA that corresponds to a given regular expression.
+    This class is responsible for parsing the regular expression into a
+    convenient string format and then constructing the NFA.
     '''
     def __init__(self, expr):
         '''
-        Compile an NFA given a regular expression pattern
+        Compiles an NFA given a regular expression pattern.
         '''
         nfa_stack = []
 
@@ -40,8 +42,8 @@ class Regex(object):
     @staticmethod
     def convert_infix_to_post(expr):
         '''
-        Convert a regular expression with literal concat operator to
-        postfix notation via Dijkstra's shunting-yard algorithm
+        Converts a regular expression with literal concat operator to
+        postfix notation via Dijkstra's shunting-yard algorithm.
         '''
         precedence = {
             '*': 0,
@@ -81,8 +83,8 @@ class Regex(object):
     @staticmethod
     def insert_concat_operator(expr):
         '''
-        Insert a literal concatenation operator '.' into a regular
-        expression
+        Inserts a literal concatenation operator '.' into a regular
+        expression.
         '''
         converted = []
         for index, c in enumerate(expr):
@@ -99,12 +101,14 @@ class Regex(object):
 
 class NFA(object):
     '''
-    An NFA is a collection of linked state structures with a start
-    state and a set of matching states.
-    The NFA works by reading a string and updating a state list
-    according to each state's set of out edges.
-    The NFA accepts a string if the final state list contains a
-    matching state, and rejects it otherwise.
+    An NFA is a collection of linked state structures with a start state
+    and a set of matching states. The NFA works by reading a string and
+    updating a state list according to each state's out edges. The NFA
+    accepts a string if the final state list contains a matching state,
+    and rejects it otherwise. This class contains constructor methods
+    corresponding to the regular operations. It can simulate the NFA
+    given a string and decide whether the string is in the regular
+    language it represents or not.
     '''
     def __init__(self, start_state, accept_states):
         self.start_state = start_state
@@ -183,7 +187,7 @@ class NFA(object):
     def find_active_states(active_states, visited_states=[]):
         '''
         Recursively finds all states linked to a set of starting states
-        by an epsilon edge (an edge whose `char` is empty string)
+        by an epsilon edge (an edge whose `char` is empty string).
         '''
         def mark_as_visited(state):
             visited_states.append(state)
@@ -216,7 +220,8 @@ class NFA(object):
 
     def simulate(self, string):
         '''
-        Starting from self.start_state, simulate the NFA for the string
+        Starting from self.start_state, simulates the NFA.
+        Returns True if the NFA accepts the string, otherwise False.
         '''
         active_states = NFA.find_active_states([self.start_state])
 
@@ -238,7 +243,8 @@ class NFA(object):
 
 class State(object):
     '''
-    Each state is defined by its out edges.
+    Each state is a node defined by its out edges. A state may be an
+    accept state or not.
     '''
     def __init__(self, out1=None, out2=None, is_match=False):
         self.out1 = out1
@@ -247,9 +253,8 @@ class State(object):
 
 class Edge(object):
     '''
-    An edge has a character (which may be the empty string)
-    and a target state (which may be None in the case of dangling
-    edges).
+    An edge has a character (which may be the empty string) and a target
+    state (which may be None in the case of dangling edges).
     '''
     def __init__(self, char, to_state=None):
         self.to_state = to_state
