@@ -30,6 +30,8 @@ class Regex(object):
                 nfa1 = nfa_stack.pop()
                 nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
+                # TODO detect '[' and skip up to ']', calling `literal`
+                # with all characters in between
                 nfa_stack.append(NFA.literal(c))
 
 
@@ -59,9 +61,7 @@ class Regex(object):
             return operator_stack[len(operator_stack)-1]
 
         for index, c in enumerate(expr):
-            if c.isalnum():
-                output_queue.append(c)
-            elif c in precedence:
+            if c in precedence:
                 while (0 != len(operator_stack)
                 and '(' != top_of_stack()
                 and precedence[c] >= precedence[top_of_stack()]):
@@ -74,6 +74,8 @@ class Regex(object):
                     output_queue.append(operator_stack.pop())
                 if '(' == top_of_stack():
                     operator_stack.pop()
+            else:
+                output_queue.append(c)
 
         while 0 != len(operator_stack):
             output_queue.append(operator_stack.pop())
@@ -87,11 +89,19 @@ class Regex(object):
         expression.
         '''
         converted = []
+        ignore = False
         for index, c in enumerate(expr):
             converted.append(c)
             if index < len(expr)-1:
                 c2 = expr[index+1]
-                if c not in '(|' and c2 not in ')|*?+':
+
+                # treat [*] as a unit
+                if c == '[':
+                    ignore = True
+                elif c == ']':
+                    ignore = False
+
+                if not ignore and c not in '(|' and c2 not in ')|*?+':
                     converted.append('.')
 
         return ''.join(converted)
@@ -193,7 +203,7 @@ class NFA(object):
             visited_states.append(state)
 
         def is_epsilon_edge(edge):
-            return edge and edge.char == ''
+            return edge and edge.chars == ''
 
         def is_active(state):
             return state in active_states
@@ -228,9 +238,10 @@ class NFA(object):
         for c in string:
             next_states = []
             for state in active_states:
-                if state.out1 and state.out1.char == c:
+                # NOTE should this logic be in Edge?
+                if state.out1 and c in state.out1.chars:
                     next_states.append(state.out1.to_state)
-                if state.out2 and state.out2.char == c:
+                if state.out2 and c in state.out2.chars:
                     next_states.append(state.out2.to_state)
 
             active_states = NFA.find_active_states(next_states)
@@ -256,9 +267,9 @@ class Edge(object):
     An edge has a character (which may be the empty string) and a target
     state (which may be None in the case of dangling edges).
     '''
-    def __init__(self, char, to_state=None):
+    def __init__(self, chars, to_state=None):
         self.to_state = to_state
-        self.char = char
+        self.chars = chars
 
 def main():
     if len(sys.argv) > 2:

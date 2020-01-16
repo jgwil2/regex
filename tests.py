@@ -11,6 +11,7 @@ class TestExpressionParser(unittest.TestCase):
         self.assertEqual(Regex.insert_concat_operator('a((abc)*c)*'), 'a.((a.b.c)*.c)*')
         self.assertEqual(Regex.insert_concat_operator('(ab)*(cd)*'), '(a.b)*.(c.d)*')
         self.assertEqual(Regex.insert_concat_operator('a(bb)+a'), 'a.(b.b)+.a')
+        self.assertEqual(Regex.insert_concat_operator('a[a-z]+a'), 'a.[a-z]+.a')
 
     def test_convert_infix_to_post(self):
         self.assertEqual(Regex.convert_infix_to_post('a.b'), 'ab.')
@@ -19,6 +20,7 @@ class TestExpressionParser(unittest.TestCase):
         self.assertEqual(Regex.convert_infix_to_post('a.((a.b.c)*.c)*'), 'aab.c.*c.*.')
         self.assertEqual(Regex.convert_infix_to_post('(a.b)*.(c.d)*'), 'ab.*cd.*.')
         self.assertEqual(Regex.convert_infix_to_post('a.(b.b)+.a'), 'abb.+.a.')
+        self.assertEqual(Regex.convert_infix_to_post('a.[a-z]+.a'), 'a[a-z]+.a.')
 
 class TestLiteral(unittest.TestCase):
 
@@ -63,10 +65,10 @@ class TestStar(unittest.TestCase):
 
     def test_constructs_correct_machine(self):
         self.assertTrue(self.regex.nfa.start_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out2.char == '')
-        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.char == 'a')
+        self.assertTrue(self.regex.nfa.start_state.out2.chars == '')
+        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.chars == 'a')
         self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.char == '')
+        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.chars == '')
         self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.to_state ==
                         self.regex.nfa.start_state.out2.to_state)
 
@@ -86,14 +88,14 @@ class TestConcatStar(unittest.TestCase):
 
     def test_constructs_correct_machine(self):
         self.assertFalse(self.regex.nfa.start_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.char == 'a')
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.char == '')
+        self.assertTrue(self.regex.nfa.start_state.out1.chars == 'a')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.chars == '')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.char == '')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.chars == '')
         self.assertFalse(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.char == 'b')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.chars == 'b')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.char ==
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.chars ==
                         '')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.to_state ==
                         self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state)
@@ -235,6 +237,26 @@ class TestParensPlusConcat(unittest.TestCase):
         self.assertFalse(self.regex.test('ab'))
         self.assertFalse(self.regex.test('aba'))
         self.assertFalse(self.regex.test('abab'))
+
+class TesttRange(unittest.TestCase):
+
+    def test_uppercase_letters_range(self):
+        regex = Regex('[A-Z]')
+        self.assertTrue(self.regex.test('A'))
+        self.assertTrue(self.regex.test('M'))
+        self.assertTrue(self.regex.test('Z'))
+        self.assertFalse(self.regex.test('a'))
+        self.assertFalse(self.regex.test('m'))
+        self.assertFalse(self.regex.test('z'))
+
+    def test_lowercase_letters_range(self):
+        regex = Regex('[a-z]')
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('m'))
+        self.assertTrue(self.regex.test('z'))
+        self.assertFalse(self.regex.test('A'))
+        self.assertFalse(self.regex.test('M'))
+        self.assertFalse(self.regex.test('Z'))
 
 if __name__ == '__main__':
     unittest.main()
