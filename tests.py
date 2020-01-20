@@ -71,10 +71,10 @@ class TestStar(unittest.TestCase):
 
     def test_constructs_correct_machine(self):
         self.assertTrue(self.regex.nfa.start_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out2.chars == '')
-        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.chars == 'a')
+        self.assertTrue(self.regex.nfa.start_state.out2.token.value == '')
+        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.token.value == 'a')
         self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.chars == '')
+        self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.token.value == '')
         self.assertTrue(self.regex.nfa.start_state.out2.to_state.out1.to_state.out2.to_state ==
                         self.regex.nfa.start_state.out2.to_state)
 
@@ -94,14 +94,14 @@ class TestConcatStar(unittest.TestCase):
 
     def test_constructs_correct_machine(self):
         self.assertFalse(self.regex.nfa.start_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.chars == 'a')
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.chars == '')
+        self.assertTrue(self.regex.nfa.start_state.out1.token.value == 'a')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.token.value == '')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.chars == '')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.token.value == '')
         self.assertFalse(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.chars == 'b')
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.token.value == 'b')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.is_match)
-        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.chars ==
+        self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.token.value ==
                         '')
         self.assertTrue(self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state.out1.to_state.out2.to_state ==
                         self.regex.nfa.start_state.out1.to_state.out1.to_state.out2.to_state)
