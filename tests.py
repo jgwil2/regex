@@ -1,6 +1,6 @@
 import unittest
 
-from regex import Regex
+from regex import Regex, Token
 
 class TestExpressionParser(unittest.TestCase):
 
@@ -21,6 +21,12 @@ class TestExpressionParser(unittest.TestCase):
         self.assertEqual(Regex.convert_infix_to_post('(a.b)*.(c.d)*'), 'ab.*cd.*.')
         self.assertEqual(Regex.convert_infix_to_post('a.(b.b)+.a'), 'abb.+.a.')
         self.assertEqual(Regex.convert_infix_to_post('a.[a-z]+.a'), 'a[a-z]+.a.')
+
+    def test_tokenize(self):
+        self.assertEqual(Regex.tokenize('ab.'), [Token('literal', 'a'), Token('literal', 'b'), Token('.')])
+        self.assertEqual(Regex.tokenize('ab.c.'), [Token('literal', 'a'), Token('literal', 'b'), Token('.'), Token('literal', 'c'), Token('.')])
+        self.assertEqual(Regex.tokenize('ab*.'), [Token('literal', 'a'), Token('literal', 'b'), Token('*'), Token('.')])
+        self.assertEqual(Regex.tokenize('a[a-z]+.a.'), [Token('literal', 'a'), Token('literal', 'a-z'), Token('+'), Token('.'), Token('literal', 'a'), Token('.')])
 
 class TestLiteral(unittest.TestCase):
 

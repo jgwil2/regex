@@ -1,5 +1,36 @@
 import sys
 
+class Token(object):
+    '''
+    Represents a character or set of characters to be converted into NFA
+    representation by the NFA static methods. Tokens are generated and
+    consumed in the Regex class. Token object is responsible for
+    expanding hyphenated ranges into literal ranges.
+    '''
+    def __init__(self, type, value=''):
+        self.type = type
+        if value and value[0] == '[':
+            # TODO append each character inside brackets to self.value;
+            # if range is detected, expand it
+            pass
+        self.value = value
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and self.type == other.type
+            and self.value == other.value
+        )
+
+    def __str__(self):
+        return 'Token({type}, {value})'.format(
+            type=self.type,
+            value=self.value
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
 class Regex(object):
     '''
     Wrapper for an NFA that corresponds to a given regular expression.
@@ -30,8 +61,6 @@ class Regex(object):
                 nfa1 = nfa_stack.pop()
                 nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
-                # TODO detect '[' and skip up to ']', calling `literal`
-                # with all characters in between
                 nfa_stack.append(NFA.literal(c))
 
 
@@ -40,6 +69,29 @@ class Regex(object):
     @staticmethod
     def parse(expr):
         return Regex.convert_infix_to_post(Regex.insert_concat_operator(expr))
+
+    @staticmethod
+    def tokenize(expr):
+        tokens = []
+        position = 0
+        while True:
+            if position == len(expr):
+                break
+
+            if expr[position] == '[':
+                current_chars = ''
+                position += 1
+                while expr[position] != ']':
+                    current_chars += expr[position]
+                    position += 1
+                tokens.append(Token('literal', current_chars))
+            elif expr[position] in '*?+.|':
+                tokens.append(Token(expr[position]))
+            else:
+                tokens.append(Token('literal', expr[position]))
+            position += 1
+
+        return tokens
 
     @staticmethod
     def convert_infix_to_post(expr):
