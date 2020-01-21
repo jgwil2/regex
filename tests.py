@@ -244,10 +244,10 @@ class TestParensPlusConcat(unittest.TestCase):
         self.assertFalse(self.regex.test('aba'))
         self.assertFalse(self.regex.test('abab'))
 
-class TesttRange(unittest.TestCase):
+class TestRange(unittest.TestCase):
 
     def test_uppercase_letters_range(self):
-        regex = Regex('[A-Z]')
+        self.regex = Regex('[A-Z]')
         self.assertTrue(self.regex.test('A'))
         self.assertTrue(self.regex.test('M'))
         self.assertTrue(self.regex.test('Z'))
@@ -256,13 +256,47 @@ class TesttRange(unittest.TestCase):
         self.assertFalse(self.regex.test('z'))
 
     def test_lowercase_letters_range(self):
-        regex = Regex('[a-z]')
+        self.regex = Regex('[a-z]')
         self.assertTrue(self.regex.test('a'))
         self.assertTrue(self.regex.test('m'))
         self.assertTrue(self.regex.test('z'))
         self.assertFalse(self.regex.test('A'))
         self.assertFalse(self.regex.test('M'))
         self.assertFalse(self.regex.test('Z'))
+
+    def test_all_letters_range(self):
+        self.regex = Regex('[A-Za-z]')
+        self.assertTrue(self.regex.test('a'))
+        self.assertTrue(self.regex.test('m'))
+        self.assertTrue(self.regex.test('z'))
+        self.assertTrue(self.regex.test('A'))
+        self.assertTrue(self.regex.test('M'))
+        self.assertTrue(self.regex.test('Z'))
+        self.assertFalse(self.regex.test('4'))
+        self.assertFalse(self.regex.test('5'))
+        self.assertFalse(self.regex.test('6'))
+        self.assertFalse(self.regex.test('@'))
+
+    def test_range_with_operators(self):
+        self.regex = Regex('[A-Za-z]*')
+        self.assertTrue(self.regex.test(''))
+        self.assertTrue(self.regex.test('m'))
+        self.assertTrue(self.regex.test('zfjdklLKJFDSasdf'))
+        self.assertFalse(self.regex.test('4'))
+        self.assertFalse(self.regex.test('5'))
+        self.assertFalse(self.regex.test('6'))
+        self.assertFalse(self.regex.test('@'))
+
+    def test_range_with_parens(self):
+        self.regex = Regex('([a-z]a)*')
+        self.assertTrue(self.regex.test(''))
+        self.assertTrue(self.regex.test('ma'))
+        self.assertTrue(self.regex.test('zama'))
+        self.assertTrue(self.regex.test('zamaaa'))
+        self.assertFalse(self.regex.test('maa'))
+        self.assertFalse(self.regex.test('am'))
+        self.assertFalse(self.regex.test('ama'))
+        self.assertFalse(self.regex.test('1a'))
 
 if __name__ == '__main__':
     unittest.main()

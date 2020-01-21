@@ -9,11 +9,16 @@ class Token(object):
     '''
     def __init__(self, type, value=''):
         self.type = type
-        if value and value[0] == '[':
-            # TODO append each character inside brackets to self.value;
-            # if range is detected, expand it
-            pass
-        self.value = value
+        self.value = ''
+        for index, c in enumerate(value):
+            if c == '-':
+                from_ascii_code = ord(value[index-1])
+                to_ascii_code = ord(value[index+1])
+                for code in range (from_ascii_code, to_ascii_code+1):
+                    self.value += chr(code)
+            else:
+                # FIXME redundant chars
+                self.value += c
 
     def __eq__(self, other):
         return (
