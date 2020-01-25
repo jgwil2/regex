@@ -1,5 +1,41 @@
 import sys
 
+class Token(object):
+    '''
+    Represents a character or set of characters to be converted into NFA
+    representation by the NFA static methods. Tokens are generated and
+    consumed in the Regex class. Token object is responsible for
+    expanding hyphenated ranges into literal ranges.
+    '''
+    def __init__(self, type, value=''):
+        self.type = type
+        self.value = ''
+        for index, c in enumerate(value):
+            if c == '-':
+                from_ascii_code = ord(value[index-1])
+                to_ascii_code = ord(value[index+1])
+                for code in range (from_ascii_code, to_ascii_code+1):
+                    self.value += chr(code)
+            else:
+                # FIXME redundant chars
+                self.value += c
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and self.type == other.type
+            and self.value == other.value
+        )
+
+    def __str__(self):
+        return 'Token({type}, {value})'.format(
+            type=self.type,
+            value=self.value
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
 class Regex(object):
     '''
     Wrapper for an NFA that corresponds to a given regular expression.
@@ -12,32 +48,56 @@ class Regex(object):
         '''
         nfa_stack = []
 
-        postfix_expr = Regex.parse(expr)
+        tokens = Regex.parse(expr)
 
-        for index, c in enumerate(postfix_expr):
-            if c == '|':
+        for token in tokens:
+            if token.type == '|':
                 nfa1 = nfa_stack.pop()
                 nfa2 = nfa_stack.pop()
                 nfa_stack.append(NFA.union(nfa1, nfa2))
-            elif c == '*':
+            elif token.type == '*':
                 nfa_stack.append(NFA.star(nfa_stack.pop()))
-            elif c == '+':
+            elif token.type == '+':
                 nfa_stack.append(NFA.plus(nfa_stack.pop()))
-            elif c == '?':
+            elif token.type == '?':
                 nfa_stack.append(NFA.question(nfa_stack.pop()))
-            elif c == '.':
+            elif token.type == '.':
                 nfa2 = nfa_stack.pop()
                 nfa1 = nfa_stack.pop()
                 nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
-                nfa_stack.append(NFA.literal(c))
+                nfa_stack.append(NFA.literal(token))
 
 
         self.nfa = nfa_stack.pop()
 
     @staticmethod
     def parse(expr):
-        return Regex.convert_infix_to_post(Regex.insert_concat_operator(expr))
+        return Regex.tokenize(
+            Regex.convert_infix_to_post(Regex.insert_concat_operator(expr)))
+
+    @staticmethod
+    def tokenize(expr):
+        tokens = []
+        position = 0
+        while True:
+            if position == len(expr):
+                break
+
+            if expr[position] == '[':
+                current_chars = ''
+                position += 1
+                while expr[position] != ']':
+                    current_chars += expr[position]
+                    position += 1
+                tokens.append(Token('literal', current_chars))
+            elif expr[position] in '*?+.|':
+                tokens.append(Token(expr[position]))
+            else:
+                tokens.append(Token('literal', expr[position]))
+            position += 1
+
+        return tokens
 
     @staticmethod
     def convert_infix_to_post(expr):
@@ -59,9 +119,7 @@ class Regex(object):
             return operator_stack[len(operator_stack)-1]
 
         for index, c in enumerate(expr):
-            if c.isalnum():
-                output_queue.append(c)
-            elif c in precedence:
+            if c in precedence:
                 while (0 != len(operator_stack)
                 and '(' != top_of_stack()
                 and precedence[c] >= precedence[top_of_stack()]):
@@ -74,6 +132,8 @@ class Regex(object):
                     output_queue.append(operator_stack.pop())
                 if '(' == top_of_stack():
                     operator_stack.pop()
+            else:
+                output_queue.append(c)
 
         while 0 != len(operator_stack):
             output_queue.append(operator_stack.pop())
@@ -87,11 +147,19 @@ class Regex(object):
         expression.
         '''
         converted = []
+        ignore = False
         for index, c in enumerate(expr):
             converted.append(c)
             if index < len(expr)-1:
                 c2 = expr[index+1]
-                if c not in '(|' and c2 not in ')|*?+':
+
+                # treat [*] as a unit
+                if c == '[':
+                    ignore = True
+                elif c == ']':
+                    ignore = False
+
+                if not ignore and c not in '(|' and c2 not in ')|*?+':
                     converted.append('.')
 
         return ''.join(converted)
@@ -115,12 +183,19 @@ class NFA(object):
         self.accept_states = accept_states
 
     @staticmethod
-    def literal(c):
+    def epsilon():
+        '''
+        Return a new literal token containing the empty string.
+        '''
+        return Token('literal', '')
+
+    @staticmethod
+    def literal(token):
         '''
         Returns an NFA for a literal character
         '''
         accept_state = State(is_match=True)
-        edge = Edge(c, accept_state)
+        edge = Edge(token, accept_state)
         start_state = State(edge)
         return NFA(start_state, [accept_state])
 
@@ -133,7 +208,7 @@ class NFA(object):
         accept_states = nfa2.accept_states
         for accept_state in nfa1.accept_states:
             accept_state.is_match = False
-            accept_state.out1 = Edge('', nfa2.start_state)
+            accept_state.out1 = Edge(NFA.epsilon(), nfa2.start_state)
         return NFA(start_state, accept_states)
 
     @staticmethod
@@ -141,8 +216,8 @@ class NFA(object):
         '''
         Union
         '''
-        edge1 = Edge('', nfa1.start_state)
-        edge2 = Edge('', nfa2.start_state)
+        edge1 = Edge(NFA.epsilon(), nfa1.start_state)
+        edge2 = Edge(NFA.epsilon(), nfa2.start_state)
         start_state = State(out1=edge1, out2=edge2, is_match=False)
         return NFA(start_state, nfa1.accept_states + nfa2.accept_states)
 
@@ -151,12 +226,12 @@ class NFA(object):
         '''
         "*": zero or more
         '''
-        edge = Edge('', nfa.start_state)
+        edge = Edge(NFA.epsilon(), nfa.start_state)
         # new start state uses out2 to connect to original machine, so
         # out1 can be written to by a concatenation operation
         new_start_state = State(out2=edge, is_match=True)
         for accept_state in nfa.accept_states:
-            accept_state.out2 = Edge('', nfa.start_state)
+            accept_state.out2 = Edge(NFA.epsilon(), nfa.start_state)
         new_accept_states = nfa.accept_states
         new_accept_states.append(new_start_state)
         return NFA(new_start_state, new_accept_states)
@@ -166,7 +241,7 @@ class NFA(object):
         '''
         "?": zero or one
         '''
-        edge = Edge('', nfa.start_state)
+        edge = Edge(NFA.epsilon(), nfa.start_state)
         new_start_state = State(out2=edge, is_match=True)
         new_accept_states = nfa.accept_states
         new_accept_states.append(new_start_state)
@@ -177,10 +252,10 @@ class NFA(object):
         '''
         "+": one or more
         '''
-        edge = Edge('', nfa.start_state)
+        edge = Edge(NFA.epsilon(), nfa.start_state)
         new_start_state = State(out2=edge, is_match=False)
         for accept_state in nfa.accept_states:
-            accept_state.out2 = Edge('', nfa.start_state)
+            accept_state.out2 = Edge(NFA.epsilon(), nfa.start_state)
         return NFA(new_start_state, nfa.accept_states)
 
     @staticmethod
@@ -193,7 +268,7 @@ class NFA(object):
             visited_states.append(state)
 
         def is_epsilon_edge(edge):
-            return edge and edge.char == ''
+            return edge and edge.token.value == ''
 
         def is_active(state):
             return state in active_states
@@ -228,9 +303,10 @@ class NFA(object):
         for c in string:
             next_states = []
             for state in active_states:
-                if state.out1 and state.out1.char == c:
+                # NOTE should this logic be in Edge?
+                if state.out1 and c in state.out1.token.value:
                     next_states.append(state.out1.to_state)
-                if state.out2 and state.out2.char == c:
+                if state.out2 and c in state.out2.token.value:
                     next_states.append(state.out2.to_state)
 
             active_states = NFA.find_active_states(next_states)
@@ -256,9 +332,9 @@ class Edge(object):
     An edge has a character (which may be the empty string) and a target
     state (which may be None in the case of dangling edges).
     '''
-    def __init__(self, char, to_state=None):
+    def __init__(self, token, to_state=None):
         self.to_state = to_state
-        self.char = char
+        self.token = token
 
 def main():
     if len(sys.argv) > 2:
