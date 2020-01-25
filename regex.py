@@ -1,5 +1,6 @@
 import sys
 
+
 class Token(object):
     '''
     Represents a character or set of characters to be converted into NFA
@@ -7,6 +8,7 @@ class Token(object):
     consumed in the Regex class. Token object is responsible for
     expanding hyphenated ranges into literal ranges.
     '''
+
     def __init__(self, type, value=''):
         self.type = type
         self.value = ''
@@ -14,7 +16,7 @@ class Token(object):
             if c == '-':
                 from_ascii_code = ord(value[index-1])
                 to_ascii_code = ord(value[index+1])
-                for code in range (from_ascii_code, to_ascii_code+1):
+                for code in range(from_ascii_code, to_ascii_code+1):
                     self.value += chr(code)
             else:
                 # FIXME redundant chars
@@ -36,12 +38,14 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
+
 class Regex(object):
     '''
     Wrapper for an NFA that corresponds to a given regular expression.
     This class is responsible for parsing the regular expression into a
     convenient string format and then constructing the NFA.
     '''
+
     def __init__(self, expr):
         '''
         Compiles an NFA given a regular expression pattern.
@@ -67,7 +71,6 @@ class Regex(object):
                 nfa_stack.append(NFA.concat(nfa1, nfa2))
             else:
                 nfa_stack.append(NFA.literal(token))
-
 
         self.nfa = nfa_stack.pop()
 
@@ -121,8 +124,8 @@ class Regex(object):
         for index, c in enumerate(expr):
             if c in precedence:
                 while (0 != len(operator_stack)
-                and '(' != top_of_stack()
-                and precedence[c] >= precedence[top_of_stack()]):
+                       and '(' != top_of_stack()
+                       and precedence[c] >= precedence[top_of_stack()]):
                     output_queue.append(operator_stack.pop())
                 operator_stack.append(c)
             elif '(' == c:
@@ -167,6 +170,7 @@ class Regex(object):
     def test(self, string):
         return self.nfa.simulate(string)
 
+
 class NFA(object):
     '''
     An NFA is a collection of linked state structures with a start state
@@ -178,6 +182,7 @@ class NFA(object):
     given a string and decide whether the string is in the regular
     language it represents or not.
     '''
+
     def __init__(self, start_state, accept_states):
         self.start_state = start_state
         self.accept_states = accept_states
@@ -278,10 +283,10 @@ class NFA(object):
             mark_as_visited(state)
 
             if (is_epsilon_edge(state.out1)
-                and not is_active(state.out1.to_state)):
+                    and not is_active(state.out1.to_state)):
                 active_states.append(state.out1.to_state)
             if (is_epsilon_edge(state.out2)
-                and not is_active(state.out2.to_state)):
+                    and not is_active(state.out2.to_state)):
                 active_states.append(state.out2.to_state)
 
         # if there are any active_states that have not been visited,
@@ -317,24 +322,29 @@ class NFA(object):
 
         return False
 
+
 class State(object):
     '''
     Each state is a node defined by its out edges. A state may be an
     accept state or not.
     '''
+
     def __init__(self, out1=None, out2=None, is_match=False):
         self.out1 = out1
         self.out2 = out2
         self.is_match = is_match
+
 
 class Edge(object):
     '''
     An edge has a character (which may be the empty string) and a target
     state (which may be None in the case of dangling edges).
     '''
+
     def __init__(self, token, to_state=None):
         self.to_state = to_state
         self.token = token
+
 
 def main():
     if len(sys.argv) > 2:
@@ -346,6 +356,6 @@ def main():
         raise Exception('Please provide a regular expression and at \
                         least one string to test')
 
+
 if __name__ == '__main__':
     main()
-
